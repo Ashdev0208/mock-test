@@ -1,54 +1,120 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-3xl mx-auto px-4">
-      <h1 class="text-3xl font-bold text-center mb-8">Mock Test</h1>
+  <div class="min-h-screen bg-[#0F172A] text-white font-sans antialiased">
+    <header class="max-w-7xl mx-auto px-8 py-10">
+      <div>
+        <h1 class="text-4xl font-extrabold tracking-tight">TOPIK Test</h1>
 
-      <div v-if="loading" class="text-center py-12">
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"
-        ></div>
-        <p class="mt-4 text-gray-600">Loading questions...</p>
+        <p class="text-slate-400 mt-2 font-medium">
+          {{ testTitle || "Practice Test" }}
+        </p>
       </div>
+    </header>
 
-      <div v-else-if="questions.length > 0" class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="max-w-7xl mx-auto px-8">
+      <div class="flex items-center justify-center py-20">
         <div
-          v-for="(question, index) in questions"
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
+        ></div>
+
+        <p class="ml-4 text-slate-400">Loading questions...</p>
+      </div>
+    </div>
+
+    <!-- Questions -->
+    <div v-else-if="questions.length > 0" class="max-w-7xl mx-auto px-8 pb-20">
+      <div class="space-y-8">
+        <div
+          v-for="(question, questionIndex) in questions"
           :key="question.id"
-          class="bg-white p-6 rounded-lg shadow-md"
+          class="relative overflow-hidden bg-slate-900/50 border border-slate-800 rounded-2xl p-8 shadow-lg shadow-slate-800/10"
         >
-          <p class="text-lg font-semibold mb-4">
-            <span class="text-indigo-600">Q{{ index + 1 }}:</span>
-            {{ question.question_text }}
-          </p>
-          <div class="space-y-2">
-            <label
-              v-for="option in question.options"
-              :key="option.id"
-              class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition"
+          <div
+            class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-600/10 blur-[50px] rounded-full"
+          ></div>
+
+          <div class="relative z-10">
+            <!-- Question -->
+            <p class="text-xl font-bold mb-6 text-white">
+              <span class="text-indigo-400"> Q{{ questionIndex + 1 }}: </span>
+
+              {{ question.question_text }}
+            </p>
+
+            <!-- Passage -->
+            <div v-if="question.passage" class="mb-6">
+              <span class="text-indigo-400 block font-bold text-lg mb-2">
+                Passage:
+              </span>
+
+              <p class="text-slate-300 leading-relaxed">
+                {{ question.passage }}
+              </p>
+            </div>
+
+            <!-- Options -->
+            <div
+              class="space-y-3"
+              v-for="(option, optionIndex) in question.options"
+              :key="optionIndex"
             >
-              <input
-                type="radio"
-                :name="'question-' + question.id"
-                :value="option.id"
-                v-model="answers[question.id]"
-                class="h-4 w-4 text-indigo-600"
-              />
-              <span class="ml-3">{{ option.option_text }}</span>
-            </label>
+              <label
+                class="flex items-center p-4 border border-slate-700 rounded-xl cursor-pointer hover:bg-slate-800/50 hover:border-slate-600 transition-all"
+              >
+                <input
+                  type="radio"
+                  :name="'question-' + question.id"
+                  :value="optionIndex"
+                  v-model="answers[question.id]"
+                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                />
+
+                <span class="ml-4 text-slate-300">
+                  {{ option }}
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 
+        <!-- Submit -->
         <button
-          @click="submitTest"
+          @click.prevent="submitTest"
           :disabled="submitting"
-          class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition disabled:bg-gray-400"
+          class="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 disabled:bg-slate-600 shadow-lg shadow-indigo-600/20"
         >
-          {{ submitting ? "Submitting..." : "Submit Test" }}
+          <span v-if="submitting"> Submitting... </span>
+
+          <span v-else> Submit Test </span>
+
+          <i class="fa-solid fa-paper-plane text-sm"></i>
         </button>
       </div>
+    </div>
 
-      <div v-else class="text-center py-12 bg-white rounded-lg shadow-md">
-        <p class="text-gray-600">No questions available.</p>
+    <!-- No Questions -->
+    <div v-else class="max-w-7xl mx-auto px-8 pb-20">
+      <div class="text-center py-20">
+        <div
+          class="w-16 h-16 bg-slate-950 rounded-2xl flex items-center justify-center mb-6 border border-slate-800 shadow-inner mx-auto"
+        >
+          <i class="fa-regular fa-question text-slate-500 text-2xl"></i>
+        </div>
+
+        <h2 class="text-3xl font-bold mb-4 text-white">
+          No questions available
+        </h2>
+
+        <p class="text-slate-400 max-w-sm mx-auto leading-relaxed">
+          This test doesn't have any questions yet.
+        </p>
+
+        <button
+          @click="router.push('/dashboard')"
+          class="mt-6 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition"
+        >
+          Back to Dashboard
+        </button>
       </div>
     </div>
   </div>
@@ -57,80 +123,142 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { supabase } from "../supabase/supabase.js";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
 const questions = ref([]);
+const questionAnswers = ref({});
 const answers = ref({});
 const loading = ref(true);
 const submitting = ref(false);
+const testTitle = ref("");
+
 const router = useRouter();
+const route = useRoute();
 
 const fetchQuestions = async () => {
-  const { data, error } = await supabase
-    .from("questions")
-    .select("*, options(*)")
-    .order("id");
+  const testId = route.params.id;
 
-  if (error) {
-    console.error("Error fetching questions:", error);
-  } else {
-    questions.value = data;
+  if (!testId) {
+    router.push("/dashboard");
+    return;
   }
-  loading.value = false;
+
+  try {
+    const { data, error } = await supabase
+      .from("tests")
+      .select("*")
+      .eq("id", testId)
+      .single();
+
+    if (error) throw error;
+
+    testTitle.value = data.title || "Practice Test";
+    questions.value = data.data || [];
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    alert("Failed to load test.");
+  } finally {
+    loading.value = false;
+  }
 };
 
 const submitTest = async () => {
   submitting.value = true;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  const answersToSave = Object.entries(answers.value).map(
-    ([questionId, optionId]) => ({
-      user_id: user.id,
-      question_id: parseInt(questionId),
-      selected_option_id: optionId,
-    }),
-  );
+  try {
+    const testId = route.params.id;
 
-  const { error } = await supabase.from("user_answers").insert(answersToSave);
+    // Get current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (error) {
-    console.error("Error saving answers:", error);
-  } else {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    let correctAnswers = 0;
+    let answeredQuestions = 0;
+
+    // Calculate score
+    for (const question of questions.value) {
+      const selectedAnswer = answers.value[question.id];
+      if (selectedAnswer !== undefined && selectedAnswer !== null) {
+        answeredQuestions++;
+        if (selectedAnswer + 1 === question.correct_answer_index) {
+          correctAnswers++;
+        }
+      }
+    }
+
+    // Prevent empty submissions
+    if (answeredQuestions === 0) {
+      alert("Please answer at least one question.");
+
+      submitting.value = false;
+      return;
+    }
+
+    // Save test attempt
+    const { error: attemptError } = await supabase
+      .from("test_attempts")
+      .insert({
+        user_id: user.id,
+        test_id: testId,
+        score: correctAnswers,
+        total_questions: questions.value.length,
+      });
+
+    if (attemptError) throw attemptError;
+
+    // Fetch profile
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("points, streak_count")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    const newStreak = (profileData.streak_count || 0) + 1;
+
+    // Update profile
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        streak_count: newStreak,
+      })
+      .eq("id", user.id);
+
+    if (updateError) throw updateError;
+
+    // Save local result
+    localStorage.setItem(
+      "testResult",
+      JSON.stringify({
+        score: correctAnswers,
+        total: questions.value.length,
+        percentage: Math.round((correctAnswers / questions.value.length) * 100),
+      }),
+    );
+
+    // Navigate
     router.push("/result");
+  } catch (error) {
+    console.error("Error submitting test:", error);
+
+    alert(error.message || "Error submitting test.");
+  } finally {
+    submitting.value = false;
   }
-  submitting.value = false;
 };
 
-onMounted(fetchQuestions);
+onMounted(() => {
+  fetchQuestions();
+});
 </script>
 
 <style scoped>
-.mock-container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-}
-.question {
-  margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid #ddd;
-}
-label {
-  display: block;
-  padding: 5px;
-  cursor: pointer;
-}
-button {
-  padding: 10px 20px;
-  background: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
-  margin-top: 20px;
-}
-button:disabled {
-  background: #ccc;
-}
+/* Optional custom styles */
 </style>

@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-[#0F172A] text-white font-sans antialiased">
     <header class="max-w-7xl mx-auto px-8 py-10 flex justify-between items-end">
       <div>
+        <!-- starting page -->
         <h1 class="text-4xl font-extrabold tracking-tight">Dashboard</h1>
         <p class="text-slate-400 mt-2 font-medium">
           Welcome back, {{ profile?.full_name || "Student" }}. Ready for today's
@@ -15,52 +16,83 @@
         </span>
       </div>
     </header>
+    <div v-if="loading" class="max-w-7xl mx-auto px-8">
+      <div class="flex items-center justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <p class="ml-4 text-slate-400">Loading dashboard...</p>
+      </div>
+    </div>
+
     <!-- error -->
-    <div v-if="error" class="max-w-7xl mx-auto px-8 mb-8">
+    <div v-if="!loading && error" class="max-w-7xl mx-auto px-8 mb-8">
       <div class="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-200">
         <p class="font-semibold">Unable to load dashboard data</p>
         <p class="mt-1 text-sm">{{ error }}</p>
       </div>
     </div>
-
-    <main class="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
+    <!-- showing mock content -->
+    <main v-if="!loading" class="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
       <div class="lg:col-span-8 space-y-8">
-        <div
-          class="relative overflow-hidden bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-12 text-center shadow-2xl">
-          <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"></div>
+<div class="relative overflow-hidden bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
+  <!-- Decorative Glow -->
+  <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"></div>
 
-          <div class="relative z-10 flex flex-col items-center">
-            <div class="hidden" v-if="stats.attempts > 0">
-              <div
-                class="w-16 h-16 bg-slate-950 rounded-2xl flex items-center justify-center mb-6 border border-slate-800 shadow-inner">
-                <i class="fa-regular fa-clock text-slate-500 text-2xl"></i>
-              </div>
-              <h2 class="text-3xl font-bold mb-4">
-                Next challenge coming soon...
-              </h2>
-              <p class="text-slate-400 max-w-sm mx-auto leading-relaxed">
-                Admin is currently preparing your next TOPIK mock. Check back
-                later today!
-              </p>
+  <div class="relative z-10">
+    <!-- EMPTY STATE: Centered column -->
+    <div v-if="stats.mock.length === 0" class="flex flex-col items-center text-center">
+      <div class="w-16 h-16 bg-slate-950 rounded-2xl flex items-center justify-center mb-6 border border-slate-800 shadow-inner">
+        <i class="fa-regular fa-clock text-slate-500 text-2xl"></i>
+      </div>
+      <h2 class="text-3xl font-bold mb-4 text-white">Next challenge coming soon...</h2>
+      <p class="text-slate-400 max-w-sm mx-auto leading-relaxed">
+        Admin is currently preparing your next TOPIK mock. Check back later today!
+      </p>
+    </div>
+
+    <!-- DATA STATE: Responsive Row/Grid -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div 
+        v-for="card in stats.mock" 
+        :key="card.id"
+        class="relative group overflow-hidden bg-white/5 border border-white/10 hover:border-slate-500/50 backdrop-blur-md rounded-2xl p-6 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between"
+      >
+        <!-- Category & Title -->
+        <div>
+          <div class="flex justify-between items-start mb-4">
+            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+              {{ card.category || 'General' }}
+            </span>
+            <span v-if="card.is_premium" class="text-[10px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded font-bold">
+              PREMIUM
+            </span>
+          </div>
+          <h5 class="text-xl font-bold text-white group-hover:text-slate-300 transition-colors line-clamp-2">
+            {{ card.title }}
+          </h5>
+        </div>
+
+        <!-- Stats & Button Wrapper -->
+        <div class="mt-6">
+          <div class="flex items-center gap-4 mb-6 text-slate-400 text-sm">
+            <div class="flex items-center gap-1.5">
+              <i class="fa-regular fa-clock opacity-50"></i>
+              {{ card.duration_minutes }}m
             </div>
-            <div class="card" v-for="card in stats.attempts" >
-              <div class="bg-neutral-primary-soft block max-w-sm p-6 border border-default rounded-base shadow-xs">
-                  <h5 class="mt-6 mb-2 text-2xl font-semibold tracking-tight text-heading">Streamlining your design
-                    process today.</h5>
-             
-                <p class="mb-6 text-body">In today’s fast-paced digital landscape, fostering seamless collaboration
-                  among Developers and IT Operations.</p> <p href="#"
-                  class="inline-flex items-center text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-                  Read more <svg class="w-4 h-4 ms-1.5 rtl:rotate-180 -me-0.5" aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19 12H5m14 0-4 4m4-4-4-4" />
-                  </svg> </p>
-              </div>
-
+            <div class="flex items-center gap-1.5">
+              <i class="fa-solid fa-graduation-cap opacity-50"></i>
+              TOPIK
             </div>
           </div>
+
+          <button @click="startMock(card.id)" class="w-full py-3 px-4 bg-white/10 hover:bg-purple-600 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 group-active:scale-95 shadow-sm">
+            Start Practice
+            <i class="fa-solid fa-play text-xs"></i>
+          </button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl text-center">
@@ -80,7 +112,7 @@
                 class="bg-green-600/20 text-green-400 border border-green-500/20 px-2 py-1 rounded-full text-xs font-bold">free</span>
             </div>
             </p>
-            <p class="text-2xl font-bold">{{ stats.streak }}</p>
+            <p class="text-2xl font-bold">{{ stats.attempts }}</p>
           </div>
         </div>
       </div>
@@ -126,8 +158,7 @@
             <span class="text-indigo-200 text-[10px] font-bold uppercase tracking-widest">Global Broadcast</span>
           </div>
           <p class="text-lg font-bold leading-snug italic">
-            "Keep up the great work! New TOPIK level II vocab cards are out
-            now."
+            {{ globalBroadcast }}
           </p>
         </div>
 
@@ -175,11 +206,15 @@ const profile = ref({
 
 const stats = ref({
   totalMocks: 0,
+  mock: [],
   attempts: 0,
   avgAccuracy: 0,
   streak: 0,
   weekly_tests: 0,
 });
+const globalBroadcast = ref(
+  "Keep up the great work! New TOPIK level II vocab cards are out now."
+);
 
 const loading = ref(false);
 const error = ref(null);
@@ -198,51 +233,80 @@ const getUserData = async () => {
     const user = userResponse.user;
     if (!user) throw new Error("Not authenticated. Please log in again.");
 
-    // 📦 Get profile (WITHOUT full_name ❗)
+    // 📦 Get profile data
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("display_name, points, level, streak_count, is_premium")
+      .select("*")
       .eq("id", user.id)
       .maybeSingle();
-    console.log(profileData);
 
     if (profileError) throw profileError;
 
-    // 👤 Merge auth + profile data
     profile.value = {
       full_name: profileData?.display_name || "Student",
       role: profileData?.role || "student",
     };
 
-    // 📊 Stats from profile
     stats.value = {
       totalMocks: profileData?.total_mocks ?? 0,
+      mock: [],
+      attempts: 0,
       avgAccuracy: profileData?.accuracy ?? 0,
       streak: profileData?.streak_count ?? 0,
+      weekly_tests: 0,
     };
 
-    // 📈 System-wide stats (optional override)
-    const { count: questionCount, error: qError } = await supabase
+    const { data: testsData, error: testsError } = await supabase
       .from("tests")
-      .select("id", { count: "exact", head: true });
+      .select("*");
 
-    if (!qError && typeof questionCount === "number") {
-      stats.value.totalMocks = questionCount;
+    if (testsError) {
+      console.error("Error fetching tests:", testsError);
+      stats.value.mock = [];
+    } else {
+      stats.value.mock = testsData || [];
+      if (!profileData?.total_mocks) {
+        stats.value.totalMocks = stats.value.mock.length;
+      }
     }
 
-    const { count: attempts, error: oError } = await supabase
+    const { data: attemptsRecords, error: attemptsError } = await supabase
       .from("test_attempts")
-      .select("id", { count: "exact", head: true });
+      .select("score,total_questions")
+      .eq("user_id", user.id);
 
-    if (!oError && typeof attempts === "number") {
-      stats.value.attempts = attempts;
+    if (attemptsError) {
+      console.error("Error fetching attempt records:", attemptsError);
+    } else if (attemptsRecords) {
+      stats.value.attempts = attemptsRecords.length;
+      const totalScore = attemptsRecords.reduce(
+        (sum, attempt) => sum + (attempt.score ?? 0),
+        0,
+      );
+      const totalQuestions = attemptsRecords.reduce(
+        (sum, attempt) => sum + (attempt.total_questions ?? 0),
+        0,
+      );
+      if (totalQuestions > 0) {
+        stats.value.avgAccuracy = Math.round(
+          (totalScore / totalQuestions) * 100,
+        );
+      }
     }
-    const { count: premium_test, error: PError } = await supabase
-      .from("weekly_tests")
-      .select("id", { count: "exact", head: true });
 
-    if (!PError && typeof premium_test === "number") {
-      stats.value.weekly_tests = premium_test;
+    try {
+      const { data: broadcastData, error: broadcastError } = await supabase
+        .from("broadcasts")
+        .select("message")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!broadcastError && broadcastData?.message) {
+        globalBroadcast.value = broadcastData.message;
+      }
+    } catch (broadcastFetchError) {
+      console.debug("Global broadcast fetch failed:", broadcastFetchError);
     }
   } catch (err) {
     error.value = err.message || "Error loading dashboard data.";
@@ -255,6 +319,10 @@ const getUserData = async () => {
 const handleLogout = async () => {
   await supabase.auth.signOut();
   router.push("/login");
+};
+
+const startMock = (testId) => {
+  router.push(`/mock/${testId}`);
 };
 
 onMounted(getUserData);

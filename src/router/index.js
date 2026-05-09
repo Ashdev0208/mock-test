@@ -18,7 +18,7 @@ const routes = [
 
   // Protected Student Routes
   {
-    path: '/mock',
+    path: '/mock/:id?',
     name: 'mock',
     component: MockView,
     meta: { requiresAuth: true },
@@ -29,12 +29,11 @@ const routes = [
     component: ResultPage,
     meta: { requiresAuth: true },
   },
-   {
+  {
     path: '/dashboard',
     name: 'dashboard',
-     component: Dashboard,
+    component: Dashboard,
     meta: { requiresAuth: true },
-    
   },
 
   // Protected Admin Routes

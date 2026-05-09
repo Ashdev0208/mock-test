@@ -1,64 +1,201 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-3xl mx-auto px-4">
-      <h1 class="text-3xl font-bold text-center mb-8">Your Results</h1>
+  <div class="min-h-screen bg-[#0F172A] text-white font-sans antialiased">
+    <header class="max-w-7xl mx-auto px-8 py-10">
+      <div>
+        <h1 class="text-4xl font-extrabold tracking-tight">Test Results</h1>
+        <p class="text-slate-400 mt-2 font-medium">
+          Review your performance and answers
+        </p>
+      </div>
+    </header>
 
-      <div v-if="loading" class="text-center py-12">
+    <div v-if="loading" class="max-w-7xl mx-auto px-8">
+      <div class="flex items-center justify-center py-20">
         <div
-          class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
         ></div>
-        <p class="mt-4 text-gray-600">Loading results...</p>
+        <p class="ml-4 text-slate-400">Loading results...</p>
+      </div>
+    </div>
+
+    <div v-else class="max-w-7xl mx-auto px-8 pb-20">
+      <!-- Score Card -->
+      <div
+        class="relative overflow-hidden bg-slate-900/50 border border-slate-800 rounded-2xl p-8 md:p-12 shadow-2xl mb-8"
+      >
+        <div
+          class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"
+        ></div>
+
+        <div class="relative z-10 text-center">
+          <div class="mb-6">
+            <p
+              class="text-slate-400 text-sm font-bold uppercase tracking-widest mb-2"
+            >
+              Your Score
+            </p>
+            <p class="text-6xl font-extrabold text-white">
+              {{ score }} / {{ totalQuestions }}
+            </p>
+          </div>
+
+          <div class="mb-6">
+            <p
+              class="text-5xl font-bold"
+              :class="
+                percentage >= 70
+                  ? 'text-green-400'
+                  : percentage >= 50
+                    ? 'text-yellow-400'
+                    : 'text-red-400'
+              "
+            >
+              {{ percentage }}%
+            </p>
+            <p class="text-slate-400 mt-2">
+              {{
+                percentage >= 70
+                  ? "Excellent work!"
+                  : percentage >= 50
+                    ? "Good job!"
+                    : "Keep practicing!"
+              }}
+            </p>
+          </div>
+
+          <div class="flex justify-center gap-8 text-sm">
+            <div class="text-center">
+              <p class="text-slate-500 font-bold uppercase tracking-widest">
+                Correct
+              </p>
+              <p class="text-2xl font-bold text-green-400">{{ score }}</p>
+            </div>
+            <div class="text-center">
+              <p class="text-slate-500 font-bold uppercase tracking-widest">
+                Incorrect
+              </p>
+              <p class="text-2xl font-bold text-red-400">
+                {{ totalQuestions - score }}
+              </p>
+            </div>
+            <div class="text-center">
+              <p class="text-slate-500 font-bold uppercase tracking-widest">
+                Accuracy
+              </p>
+              <p class="text-2xl font-bold text-indigo-400">
+                {{ percentage }}%
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div v-else>
-        <div class="bg-white p-8 rounded-lg shadow-md text-center mb-8">
-          <h2 class="text-2xl font-semibold mb-2">
-            Score: {{ score }} / {{ totalQuestions }}
-          </h2>
-          <p
-            class="text-5xl font-bold"
-            :class="percentage >= 70 ? 'text-green-600' : 'text-red-600'"
-          >
-            {{ percentage }}%
+      <!-- Test Summary -->
+      <div
+        class="bg-slate-900/50 border border-slate-800 rounded-2xl shadow-xl overflow-hidden"
+      >
+        <div class="p-6 border-b border-slate-800">
+          <h3 class="text-xl font-bold text-white">Test Summary</h3>
+          <p class="text-slate-400 text-sm mt-1">
+            {{ latestAttempt?.tests?.title || "Recent Test" }} completed on
+            {{
+              latestAttempt
+                ? new Date(latestAttempt.completed_at).toLocaleDateString()
+                : ""
+            }}
           </p>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-          <h3 class="text-xl font-semibold p-6 border-b">
-            Review Your Answers
-          </h3>
-          <div
-            v-for="(result, index) in results"
-            :key="result.question_id"
-            class="p-6 border-b last:border-b-0"
-          >
-            <p class="font-medium mb-2">
-              <span class="text-indigo-600">Q{{ index + 1 }}:</span>
-              {{ result.question_text }}
-            </p>
-            <p class="ml-4">
-              Your answer:
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+              <div
+                class="w-12 h-12 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-3"
+              >
+                <i class="fa-solid fa-check-circle text-green-400 text-xl"></i>
+              </div>
+              <p
+                class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1"
+              >
+                Correct Answers
+              </p>
+              <p class="text-2xl font-bold text-green-400">{{ score }}</p>
+            </div>
+
+            <div class="text-center">
+              <div
+                class="w-12 h-12 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-3"
+              >
+                <i class="fa-solid fa-times-circle text-red-400 text-xl"></i>
+              </div>
+              <p
+                class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1"
+              >
+                Incorrect Answers
+              </p>
+              <p class="text-2xl font-bold text-red-400">
+                {{ totalQuestions - score }}
+              </p>
+            </div>
+
+            <div class="text-center">
+              <div
+                class="w-12 h-12 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-3"
+              >
+                <i class="fa-solid fa-chart-line text-indigo-400 text-xl"></i>
+              </div>
+              <p
+                class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1"
+              >
+                Accuracy Rate
+              </p>
+              <p class="text-2xl font-bold text-indigo-400">
+                {{ percentage }}%
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-slate-800/50 rounded-xl">
+            <p class="text-slate-300 text-center">
+              <span class="font-semibold">Performance:</span>
               <span
                 :class="
-                  result.is_correct
-                    ? 'text-green-600 font-semibold'
-                    : 'text-red-600 font-semibold'
+                  percentage >= 70
+                    ? 'text-green-400'
+                    : percentage >= 50
+                      ? 'text-yellow-400'
+                      : 'text-red-400'
                 "
               >
-                {{ result.selected_option_text }}
+                {{
+                  percentage >= 70
+                    ? "Excellent!"
+                    : percentage >= 50
+                      ? "Good job!"
+                      : "Keep practicing!"
+                }}
               </span>
-            </p>
-            <p v-if="!result.is_correct" class="ml-4 text-green-600">
-              Correct answer: {{ result.correct_option_text }}
             </p>
           </div>
         </div>
+      </div>
 
+      <!-- Action Buttons -->
+      <div class="flex gap-4 mt-8">
         <button
           @click="retakeTest"
-          class="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition"
+          class="flex-1 py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
         >
-          Retake Test
+          <i class="fa-solid fa-redo text-sm"></i>
+          Take Another Test
+        </button>
+
+        <button
+          @click="goToDashboard"
+          class="flex-1 py-4 px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-home text-sm"></i>
+          Back to Dashboard
         </button>
       </div>
     </div>
@@ -73,9 +210,12 @@ import { useRouter } from "vue-router";
 const results = ref([]);
 const loading = ref(true);
 const router = useRouter();
+const latestAttempt = ref(null);
 
-const score = computed(() => results.value.filter((r) => r.is_correct).length);
-const totalQuestions = computed(() => results.value.length);
+const score = computed(() => latestAttempt.value?.score || 0);
+const totalQuestions = computed(
+  () => latestAttempt.value?.total_questions || 0,
+);
 const percentage = computed(() =>
   totalQuestions.value > 0
     ? Math.round((score.value / totalQuestions.value) * 100)
@@ -83,77 +223,53 @@ const percentage = computed(() =>
 );
 
 const fetchResults = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
-    .from("user_answers")
-    .select(
-      `
-      question_id,
-      is_correct,
-      questions!inner(question_text, correct_option_id),
-      selected_options!inner(option_text)
-    `,
-    )
-    .eq("user_id", user.id)
-    .order("question_id");
+    if (!user) {
+      router.push("/login");
+      return;
+    }
 
-  if (error) {
+    // Get the latest test attempt
+    const { data: attemptData, error: attemptError } = await supabase
+      .from("test_attempts")
+      .select(
+        `
+        *
+      `,
+      )
+      .eq("user_id", user.id)
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (attemptError) throw attemptError;
+    console.log("Latest attempt:", attemptData);
+    latestAttempt.value = attemptData;
+
+    // Since we don't store individual answers, we'll show a summary
+    results.value = [attemptData];
+  } catch (error) {
     console.error("Error fetching results:", error);
-  } else {
-    results.value = data.map((r) => ({
-      question_id: r.question_id,
-      question_text: r.questions.question_text,
-      selected_option_text: r.selected_options.option_text,
-      correct_option_id: r.questions.correct_option_id,
-      is_correct: r.is_correct,
-    }));
+  } finally {
+    loading.value = false;
   }
-  loading.value = false;
 };
 
 const retakeTest = () => {
-  router.push("/mock");
+  router.push("/dashboard");
+};
+
+const goToDashboard = () => {
+  router.push("/dashboard");
 };
 
 onMounted(fetchResults);
 </script>
 
 <style scoped>
-.result-container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-}
-.score-card {
-  text-align: center;
-  padding: 30px;
-  background: #f5f5f5;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-.percentage {
-  font-size: 2em;
-  color: #42b983;
-}
-.answer-item {
-  padding: 15px;
-  border-bottom: 1px solid #ddd;
-}
-.correct {
-  color: green;
-}
-.wrong {
-  color: red;
-}
-button {
-  padding: 10px 20px;
-  background: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
-  margin-top: 20px;
-}
+/* Dark theme styles are inline in template */
 </style>
