@@ -1,11 +1,14 @@
 <template>
   <div class="min-h-screen bg-[#0F172A] text-white font-sans antialiased">
+    <Navbar />
     <header class="max-w-7xl mx-auto px-8 py-10">
       <div>
-        <h1 class="text-4xl font-extrabold tracking-tight">TOPIK Test</h1>
+        <h1 class="text-4xl font-extrabold tracking-tight">
+          {{ lang.t("mock.title") }}
+        </h1>
 
         <p class="text-slate-400 mt-2 font-medium">
-          {{ testTitle || "Practice Test" }}
+          {{ testTitle || lang.t("mock.practice_test") }}
         </p>
       </div>
     </header>
@@ -17,7 +20,9 @@
           class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
         ></div>
 
-        <p class="ml-4 text-slate-400">Loading questions...</p>
+        <p class="ml-4 text-slate-400">
+          {{ lang.t("mock.loading_questions") }}
+        </p>
       </div>
     </div>
 
@@ -44,7 +49,7 @@
             <!-- Passage -->
             <div v-if="question.passage" class="mb-6">
               <span class="text-indigo-400 block font-bold text-lg mb-2">
-                Passage:
+                {{ lang.t("mock.passage") }}
               </span>
 
               <p class="text-slate-300 leading-relaxed">
@@ -83,9 +88,9 @@
           :disabled="submitting"
           class="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 disabled:bg-slate-600 shadow-lg shadow-indigo-600/20"
         >
-          <span v-if="submitting"> Submitting... </span>
+          <span v-if="submitting">{{ lang.t("mock.submitting") }}</span>
 
-          <span v-else> Submit Test </span>
+          <span v-else>{{ lang.t("mock.submit_test") }}</span>
 
           <i class="fa-solid fa-paper-plane text-sm"></i>
         </button>
@@ -102,18 +107,18 @@
         </div>
 
         <h2 class="text-3xl font-bold mb-4 text-white">
-          No questions available
+          {{ lang.t("common.no_questions") }}
         </h2>
 
         <p class="text-slate-400 max-w-sm mx-auto leading-relaxed">
-          This test doesn't have any questions yet.
+          {{ lang.t("mock.no_test_questions") }}
         </p>
 
         <button
           @click="router.push('/dashboard')"
           class="mt-6 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition"
         >
-          Back to Dashboard
+          {{ lang.t("common.back_to_dashboard") }}
         </button>
       </div>
     </div>
@@ -124,7 +129,10 @@
 import { ref, onMounted } from "vue";
 import { supabase } from "../supabase/supabase.js";
 import { useRouter, useRoute } from "vue-router";
+import { useLangStore } from "../stores/lang.js";
+import Navbar from "../components/navbar.vue";
 
+const lang = useLangStore();
 const questions = ref([]);
 const questionAnswers = ref({});
 const answers = ref({});
@@ -152,7 +160,7 @@ const fetchQuestions = async () => {
 
     if (error) throw error;
 
-    testTitle.value = data.title || "Practice Test";
+    testTitle.value = data.title || lang.t("mock.practice_test");
     questions.value = data.data || [];
   } catch (error) {
     console.error("Error fetching questions:", error);
@@ -194,7 +202,7 @@ const submitTest = async () => {
 
     // Prevent empty submissions
     if (answeredQuestions === 0) {
-      alert("Please answer at least one question.");
+      alert(lang.t("common.answer_at_least_one"));
 
       submitting.value = false;
       return;

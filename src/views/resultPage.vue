@@ -1,10 +1,13 @@
 <template>
   <div class="min-h-screen bg-[#0F172A] text-white font-sans antialiased">
+    <Navbar />
     <header class="max-w-7xl mx-auto px-8 py-10">
       <div>
-        <h1 class="text-4xl font-extrabold tracking-tight">Test Results</h1>
+        <h1 class="text-4xl font-extrabold tracking-tight">
+          {{ lang.t("result.title") }}
+        </h1>
         <p class="text-slate-400 mt-2 font-medium">
-          Review your performance and answers
+          {{ lang.t("result.review_performance") }}
         </p>
       </div>
     </header>
@@ -14,7 +17,9 @@
         <div
           class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
         ></div>
-        <p class="ml-4 text-slate-400">Loading results...</p>
+        <p class="ml-4 text-slate-400">
+          {{ lang.t("result.loading_results") }}
+        </p>
       </div>
     </div>
 
@@ -32,7 +37,7 @@
             <p
               class="text-slate-400 text-sm font-bold uppercase tracking-widest mb-2"
             >
-              Your Score
+              {{ lang.t("result.your_score") }}
             </p>
             <p class="text-6xl font-extrabold text-white">
               {{ score }} / {{ totalQuestions }}
@@ -55,10 +60,10 @@
             <p class="text-slate-400 mt-2">
               {{
                 percentage >= 70
-                  ? "Excellent work!"
+                  ? lang.t("result.excellent_work")
                   : percentage >= 50
-                    ? "Good job!"
-                    : "Keep practicing!"
+                    ? lang.t("result.good_job")
+                    : lang.t("result.keep_practicing")
               }}
             </p>
           </div>
@@ -66,13 +71,13 @@
           <div class="flex justify-center gap-8 text-sm">
             <div class="text-center">
               <p class="text-slate-500 font-bold uppercase tracking-widest">
-                Correct
+                {{ lang.t("result.correct") }}
               </p>
               <p class="text-2xl font-bold text-green-400">{{ score }}</p>
             </div>
             <div class="text-center">
               <p class="text-slate-500 font-bold uppercase tracking-widest">
-                Incorrect
+                {{ lang.t("result.incorrect") }}
               </p>
               <p class="text-2xl font-bold text-red-400">
                 {{ totalQuestions - score }}
@@ -80,7 +85,7 @@
             </div>
             <div class="text-center">
               <p class="text-slate-500 font-bold uppercase tracking-widest">
-                Accuracy
+                {{ lang.t("result.accuracy") }}
               </p>
               <p class="text-2xl font-bold text-indigo-400">
                 {{ percentage }}%
@@ -95,9 +100,12 @@
         class="bg-slate-900/50 border border-slate-800 rounded-2xl shadow-xl overflow-hidden"
       >
         <div class="p-6 border-b border-slate-800">
-          <h3 class="text-xl font-bold text-white">Test Summary</h3>
+          <h3 class="text-xl font-bold text-white">
+            {{ lang.t("result.test_summary") }}
+          </h3>
           <p class="text-slate-400 text-sm mt-1">
-            {{ latestAttempt?.tests?.title || "Recent Test" }} completed on
+            {{ latestAttempt?.tests?.title || lang.t("result.recent_test") }}
+            completed on
             {{
               latestAttempt
                 ? new Date(latestAttempt.completed_at).toLocaleDateString()
@@ -117,7 +125,7 @@
               <p
                 class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1"
               >
-                Correct Answers
+                {{ lang.t("result.correct") }}
               </p>
               <p class="text-2xl font-bold text-green-400">{{ score }}</p>
             </div>
@@ -131,7 +139,7 @@
               <p
                 class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1"
               >
-                Incorrect Answers
+                {{ lang.t("result.incorrect") }}
               </p>
               <p class="text-2xl font-bold text-red-400">
                 {{ totalQuestions - score }}
@@ -147,7 +155,7 @@
               <p
                 class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1"
               >
-                Accuracy Rate
+                {{ lang.t("result.accuracy") }}
               </p>
               <p class="text-2xl font-bold text-indigo-400">
                 {{ percentage }}%
@@ -169,10 +177,10 @@
               >
                 {{
                   percentage >= 70
-                    ? "Excellent!"
+                    ? lang.t("result.excellent")
                     : percentage >= 50
-                      ? "Good job!"
-                      : "Keep practicing!"
+                      ? lang.t("result.good_job")
+                      : lang.t("result.keep_practicing_short")
                 }}
               </span>
             </p>
@@ -187,15 +195,14 @@
           class="flex-1 py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
         >
           <i class="fa-solid fa-redo text-sm"></i>
-          Take Another Test
+          {{ lang.t("result.take_another_test") }}
         </button>
-
         <button
           @click="goToDashboard"
           class="flex-1 py-4 px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
         >
           <i class="fa-solid fa-home text-sm"></i>
-          Back to Dashboard
+          {{ lang.t("common.back_to_dashboard") }}
         </button>
       </div>
     </div>
@@ -206,7 +213,10 @@
 import { ref, onMounted, computed } from "vue";
 import { supabase } from "../supabase/supabase.js";
 import { useRouter } from "vue-router";
+import { useLangStore } from "../stores/lang.js";
+import Navbar from "../components/navbar.vue";
 
+const lang = useLangStore();
 const results = ref([]);
 const loading = ref(true);
 const router = useRouter();
