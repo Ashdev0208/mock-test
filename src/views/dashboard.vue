@@ -15,7 +15,7 @@
           }}
         </p>
       </div>
-      <div class="hidden md:block">
+      <div class="hidden md:block" v-if="profile.premium">
         <span
           class="bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 px-4 py-2 rounded-full text-sm font-bold"
         >
@@ -185,6 +185,25 @@
           </h3>
 
           <div class="space-y-8">
+            <div v-if="stats.latestPremiumScore !== undefined">
+              <div class="flex justify-between items-end mb-2">
+                <span class="text-3xl font-bold"
+                  >{{ stats.latestPremiumScore }}%</span
+                >
+                <span class="text-slate-500 text-xs font-bold uppercase"
+                  >Latest Premium</span
+                >
+              </div>
+              <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                <div
+                  class="w-full h-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                  :style="{
+                    width: `${Math.min(stats.latestPremiumScore, 100)}%`,
+                  }"
+                ></div>
+              </div>
+            </div>
+
             <div>
               <div class="flex justify-between items-end mb-2">
                 <span class="text-3xl font-bold">{{ stats.avgAccuracy }}%</span>
@@ -220,6 +239,39 @@
         </div>
 
         <div
+          class="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-8 shadow-xl"
+        >
+          <h3
+            class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-6"
+          >
+            Weekly Premium Test
+          </h3>
+          <div class="text-center">
+            <p class="text-2xl font-bold mb-4">{{ countdown }}</p>
+            <p class="text-slate-400 text-sm">Time until next test</p>
+            <div
+              v-if="!profile.premium"
+              class="mt-4 rounded-2xl border border-green-500/20 bg-green-500/10 p-4 text-green-200"
+            >
+              <p class="font-semibold">Upgrade to Premium</p>
+              <p class="mt-1 text-sm">
+                Unlock weekly premium tests and more features.
+                <button @click="upgradeToPremium" class="underline">
+                  Pay now
+                </button>
+              </p>
+            </div>
+            <button
+              v-if="countdown === '00:00:00'"
+              @click="startWeeklyTest"
+              class="mt-4 w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-sm transition-all"
+            >
+              Start Weekly Test
+            </button>
+          </div>
+        </div>
+
+        <div
           class="bg-indigo-600 rounded-[2rem] p-8 shadow-xl shadow-indigo-600/20 transition hover:scale-[1.02] cursor-pointer"
         >
           <div class="flex items-center gap-2 mb-4">
@@ -234,49 +286,6 @@
           <p class="text-lg font-bold leading-snug italic">
             {{ globalBroadcast }}
           </p>
-        </div>
-
-        <div class="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-8">
-          <h3
-            class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4"
-          >
-            Quick Links
-          </h3>
-          <div class="space-y-1">
-            <a
-              href="#"
-              class="flex items-center justify-between group p-3 rounded-xl hover:bg-slate-800 transition"
-            >
-              <span class="text-slate-300 font-bold group-hover:text-white">{{
-                lang.t("dashboard.rankings")
-              }}</span>
-              <i
-                class="fa-solid fa-chevron-right text-[10px] text-slate-600"
-              ></i>
-            </a>
-            <a
-              href="#"
-              class="flex items-center justify-between group p-3 rounded-xl hover:bg-slate-800 transition"
-            >
-              <span class="text-slate-300 font-bold group-hover:text-white">{{
-                lang.t("dashboard.archive")
-              }}</span>
-              <i
-                class="fa-solid fa-chevron-right text-[10px] text-slate-600"
-              ></i>
-            </a>
-            <a
-              href="#"
-              class="flex items-center justify-between group p-3 rounded-xl hover:bg-slate-800 transition"
-            >
-              <span class="text-slate-300 font-bold group-hover:text-white">{{
-                lang.t("dashboard.support")
-              }}</span>
-              <i
-                class="fa-solid fa-chevron-right text-[10px] text-slate-600"
-              ></i>
-            </a>
-          </div>
         </div>
         <button class="w-full" @click="handleLogout">
           <div
@@ -320,7 +329,8 @@ const globalBroadcast = ref(
 
 const loading = ref(false);
 const error = ref(null);
-
+const countdown = ref("");
+const showWarning = ref(false);
 const getUserData = async () => {
   loading.value = true;
   error.value = null;
@@ -347,6 +357,7 @@ const getUserData = async () => {
     profile.value = {
       full_name: profileData?.display_name || "Student",
       role: profileData?.role || "student",
+      premium: profileData?.premium || false,
     };
 
     stats.value = {
@@ -374,25 +385,35 @@ const getUserData = async () => {
 
     const { data: attemptsRecords, error: attemptsError } = await supabase
       .from("test_attempts")
-      .select("score,total_questions")
-      .eq("user_id", user.id);
+      .select("score,total_questions, tests(is_premium)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
     if (attemptsError) {
       console.error("Error fetching attempt records:", attemptsError);
     } else if (attemptsRecords) {
+      const premiumAttempts = attemptsRecords.filter(
+        (a) => a.tests?.is_premium,
+      );
       stats.value.attempts = attemptsRecords.length;
-      const totalScore = attemptsRecords.reduce(
-        (sum, attempt) => sum + (attempt.score ?? 0),
-        0,
-      );
-      const totalQuestions = attemptsRecords.reduce(
-        (sum, attempt) => sum + (attempt.total_questions ?? 0),
-        0,
-      );
-      if (totalQuestions > 0) {
+      if (premiumAttempts.length > 0) {
+        const totalScore = premiumAttempts.reduce(
+          (sum, attempt) => sum + (attempt.score ?? 0),
+          0,
+        );
+        const totalQuestions = premiumAttempts.reduce(
+          (sum, attempt) => sum + (attempt.total_questions ?? 0),
+          0,
+        );
         stats.value.avgAccuracy = Math.round(
           (totalScore / totalQuestions) * 100,
         );
+        stats.value.latestPremiumScore = Math.round(
+          (premiumAttempts[0].score / premiumAttempts[0].total_questions) * 100,
+        );
+      } else {
+        stats.value.avgAccuracy = 0;
+        stats.value.latestPremiumScore = undefined;
       }
     }
 
@@ -427,5 +448,44 @@ const startMock = (testId) => {
   router.push(`/mock/${testId}`);
 };
 
-onMounted(getUserData);
+const startWeeklyTest = () => {
+  if (!profile.premium) {
+    alert("Please upgrade to premium to access weekly tests.");
+    return;
+  }
+  router.push("/mock/weekly");
+};
+
+const upgradeToPremium = () => {
+  // Redirect to payment page or handle payment
+  alert("Redirecting to payment...");
+  // router.push('/payment');
+};
+
+const updateCountdown = () => {
+  const now = new Date();
+  const nextSunday = new Date(now);
+  nextSunday.setDate(now.getDate() + (7 - now.getDay()));
+  nextSunday.setHours(0, 0, 0, 0);
+  const diff = nextSunday - now;
+  if (diff > 0 && diff <= 10 * 60 * 1000) {
+    showWarning.value = true;
+  } else {
+    showWarning.value = false;
+  }
+  if (diff <= 0) {
+    countdown.value = "00:00:00";
+    return;
+  }
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  countdown.value = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+};
+
+onMounted(() => {
+  getUserData();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+});
 </script>

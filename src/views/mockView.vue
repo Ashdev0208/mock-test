@@ -46,6 +46,26 @@
               {{ question.question_text }}
             </p>
 
+            <!-- Audio for listening -->
+            <div v-if="question.audio_url" class="mb-6">
+              <span class="text-indigo-400 block font-bold text-lg mb-2">
+                Listening Audio
+              </span>
+              <audio
+                :src="question.audio_url"
+                autoplay
+                @ended="audioEnded(question.id)"
+                @timeupdate="updateProgress($event, question.id)"
+                style="display: none"
+              ></audio>
+              <div class="w-full bg-slate-700 rounded-full h-2">
+                <div
+                  class="bg-indigo-600 h-2 rounded-full"
+                  :style="{ width: (progress[question.id] || 0) + '%' }"
+                ></div>
+              </div>
+            </div>
+
             <!-- Passage -->
             <div v-if="question.passage" class="mb-6">
               <span class="text-indigo-400 block font-bold text-lg mb-2">
@@ -139,6 +159,7 @@ const answers = ref({});
 const loading = ref(true);
 const submitting = ref(false);
 const testTitle = ref("");
+const progress = ref({});
 
 const router = useRouter();
 const route = useRoute();
@@ -265,6 +286,17 @@ const submitTest = async () => {
 onMounted(() => {
   fetchQuestions();
 });
+
+const updateProgress = (event, questionId) => {
+  const audio = event.target;
+  if (audio.duration) {
+    progress.value[questionId] = (audio.currentTime / audio.duration) * 100;
+  }
+};
+
+const audioEnded = (questionId) => {
+  // Optional: mark as listened or something
+};
 </script>
 
 <style scoped>

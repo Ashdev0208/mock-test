@@ -16,8 +16,13 @@
         <span class="font-bold text-white hidden sm:inline">TOPIK Mock</span>
       </RouterLink>
 
-      <!-- Right: Language Selector -->
+      <!-- Right: Navigation and Language Selector -->
       <div class="flex items-center gap-4">
+        <RouterLink
+          to="/dashboard"
+          class="text-slate-200 hover:text-white transition"
+          >Dashboard</RouterLink
+        >
         <div class="relative" ref="langDropdown">
           <button
             @click="toggleLangMenu"
