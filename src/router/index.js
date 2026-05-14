@@ -8,7 +8,6 @@ import RegisterView from '@/views/registerView.vue';
 import MockView from '@/views/mockView.vue';
 import ResultPage from '@/views/resultPage.vue';
 import AdminPanel from '@/views/adminPanel.vue';
-import AdminView from '@/views/adminView.vue';
 import Dashboard from '@/views/dashboard.vue';
 
 const routes = [
@@ -42,10 +41,6 @@ const routes = [
     name: 'admin',
     component: AdminPanel,
     meta: { requiresAuth: true, requiresAdmin: true },
-    children: [
-      // If you want nested admin views like /admin/stats
-      { path: 'overview', component: AdminView },
-    ],
   },
 ];
 
@@ -69,13 +64,17 @@ router.beforeEach(async (to, from, next) => {
   // 2. Check if the page requires Admin role
   if (to.meta.requiresAdmin) {
     // We check the user's metadata or a profile table for the 'admin' role
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', session?.user.id)
       .single();
 
-    if (profile?.role !== 'admin') {
+    const roleFromProfile = profile?.role;
+    const roleFromMetadata = session?.user?.user_metadata?.role;
+    const role = roleFromProfile || roleFromMetadata;
+
+    if (role !== 'admin') {
       // If not admin, kick them back to the home page
       return next('/');
     }
